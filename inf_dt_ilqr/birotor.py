@@ -10,6 +10,11 @@
 import numpy as np
 from scipy.linalg import solve_discrete_are
 from scipy.integrate import ode
+import matplotlib.pyplot as plt
+
+import meshcat
+from meshcat.animation import Animation
+import birotor_visualizer
 
 m = 1
 g = 9.81
@@ -66,9 +71,9 @@ K = np.linalg.solve(R + B.T @ S @ B, B.T @ S @ A)
 
 # Simulace
 N = 500
-x0 = np.array([1, 0, 0, 0, 0, 0])
+x0 = np.zeros(6)
 
-x_eq = np.zeros(6)
+x_eq = np.array([1, 1, 0, 0, 0, 0])
 u_eq = 0.5 * m * g * np.ones(2)
 
 xs = np.zeros((6, N + 1))
@@ -85,3 +90,30 @@ for k in range(N):
 
 
 print(xs[:,N])
+
+# Vykresleni
+fig, (ax1, ax2) = plt.subplots(2, 1)
+
+for i in range(3):
+    ax1.plot(xs[i,:].T, label=f"x{i}")
+
+for i in range(2):
+    ax2.plot(us[i,:].T, label=f"u{i}")
+
+ax1.legend()
+ax2.legend()
+plt.show(block=False)
+
+#  animation
+vis = meshcat.Visualizer()
+
+birotor_visualizer.set_birotor(vis, 2 * a, 0.06, 0.15)
+
+anim = Animation(default_framerate=1 / h)
+for i in range(N + 1):
+    with anim.at_frame(vis, i) as frame:
+        birotor_visualizer.set_birotor_state(frame, xs[:, i])
+
+vis.set_animation(anim, play=False)
+
+input("Press Enter to continue...")
