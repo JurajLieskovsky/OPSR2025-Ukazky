@@ -62,15 +62,26 @@ B = h * np.array(
 )
 
 # LQR problem
-Q = np.diag([10, 10, 10, 1, 1, 1])
+Q_N = 1e6 * np.diag([10, 10, 10, 1, 1, 1])
+Q = np.zeros(6)
 R = np.eye(2)
 
+N = 200
+
 # LQR feedback
-S = solve_discrete_are(A, B, Q, R)
-K = np.linalg.solve(R + B.T @ S @ B, B.T @ S @ A)
+S = np.zeros((6, 6, N + 1))
+K = np.zeros((2, 6, N))
+
+S[:, :, N] = Q_N
+for k in reversed(range(N)):
+    K[:, :, k] = np.linalg.solve(R + B.T @ S[:, :, k + 1] @ B, B.T @ S[:, :, k + 1] @ A)
+    S[:, :, k] = (
+        Q
+        + A.T @ S[:, :, k + 1] @ A
+        - K[:, :, k].T @ (R + B.T @ S[:, :, k + 1] @ B) @ K[:, :, k]
+    )
 
 # Simulace
-N = 500
 x0 = np.zeros(6)
 
 x_eq = np.array([1, 1, 0, 0, 0, 0])
@@ -83,22 +94,22 @@ solver = ode(f).set_integrator(name="dopri5")
 
 xs[:, 0] = x0
 for k in range(N):
-    us[:, k] = u_eq - K @ (xs[:, k] - x_eq)
+    us[:, k] = u_eq - K[:,:,k] @ (xs[:, k] - x_eq)
     solver.set_initial_value(xs[:, k], 0).set_f_params(us[:, k])
     solver.integrate(h)
     xs[:, k + 1] = solver.y
 
 
-print(xs[:,N])
+print(xs[:, N])
 
 # Vykresleni
 fig, (ax1, ax2) = plt.subplots(2, 1)
 
 for i in range(3):
-    ax1.plot(xs[i,:].T, label=f"x{i}")
+    ax1.plot(xs[i, :].T, label=f"x{i}")
 
 for i in range(2):
-    ax2.plot(us[i,:].T, label=f"u{i}")
+    ax2.plot(us[i, :].T, label=f"u{i}")
 
 ax1.legend()
 ax2.legend()
