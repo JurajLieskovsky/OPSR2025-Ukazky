@@ -1,0 +1,3 @@
+[submodule "ct_LQR"]
+	path = ct_LQR
+	url = git@github.com:JurajLieskovsky/OPSR-CTLQR.git
