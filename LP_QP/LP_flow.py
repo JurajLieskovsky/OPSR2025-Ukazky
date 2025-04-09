@@ -11,8 +11,8 @@ constraints = [
     x <= u,
     x[0] + x[3] + x[5] == x[7],
     x[4] + x[6] == x[8],
-    x[1] == x[3] + x[5],
-    x[2] == x[4] + x[6]
+    x[1] == x[3] + x[4],
+    x[2] == x[5] + x[6]
 ]
 
 prob = cp.Problem(objective, constraints)
